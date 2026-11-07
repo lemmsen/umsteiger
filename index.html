@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Umsteiger</title>
+  <meta name="theme-color" content="#006f3c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Umsteiger">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css?v=dev">
+  <!-- Links of earlier versions to a station (index.html?id=…) open the station view -->
+  <script>if (/[?&](id|lat)=/.test(location.search)) location.replace('station.html' + location.search);</script>
+</head>
+<body>
+  <header class="top">
+    <h1>Umsteiger</h1>
+    <nav class="tabs">
+      <a href="./" aria-current="page" data-i18n="nav.route">Verbindung</a>
+      <a href="departures.html" data-i18n="nav.departures">Abfahrten</a>
+      <a href="station.html" data-i18n="nav.station">Bahnhof</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="card form trip-form">
+      <div id="progress" class="progress" hidden></div>
+      <div class="place-field search">
+        <label for="trip-from" data-i18n="r.from">Von</label>
+        <div class="search-field">
+          <input id="trip-from" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"
+            placeholder="Haltestelle, Adresse oder Ort" data-i18n-attr="placeholder:r.placeholder">
+        </div>
+        <ul id="trip-from-list" class="results"></ul>
+      </div>
+      <button id="trip-swap" type="button" class="swap-btn" aria-label="Start und Ziel tauschen" data-i18n-attr="aria-label:r.swap">⇅</button>
+      <div class="place-field search">
+        <label for="trip-to" data-i18n="r.to">Nach</label>
+        <div class="search-field">
+          <input id="trip-to" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"
+            placeholder="Haltestelle, Adresse oder Ort" data-i18n-attr="placeholder:r.placeholder">
+        </div>
+        <ul id="trip-to-list" class="results"></ul>
+      </div>
+      <div class="when-row">
+        <select id="trip-mode" aria-label="Abfahrt oder Ankunft" data-i18n-attr="aria-label:r.modeLabel">
+          <option value="dep" data-i18n="r.depart">Abfahrt</option>
+          <option value="arr" data-i18n="r.arrive">Ankunft</option>
+        </select>
+        <input id="trip-when" type="datetime-local" aria-label="Zeit" data-i18n-attr="aria-label:r.when">
+      </div>
+      <label class="check"><input type="checkbox" id="trip-lift"> <span data-i18n="liftOnly">Nur stufenlos (Aufzug oder ebenerdig)</span></label>
+      <button id="trip-search" type="button" class="primary-btn" data-i18n="r.search">Verbindungen suchen</button>
+    </section>
+
+    <section id="pick-card" class="card map-card pick-card" hidden>
+      <p id="pick-title" class="pick-title"></p>
+      <div id="pick-map"></div>
+      <p class="hint" data-i18n="r.pickHint">Tippe auf die Karte, um den Punkt zu setzen.</p>
+      <div class="pick-actions">
+        <button id="pick-cancel" type="button" class="page-btn" data-i18n="r.pickCancel">Abbrechen</button>
+        <button id="pick-ok" type="button" class="primary-btn" data-i18n="r.pickOk" disabled>Übernehmen</button>
+      </div>
+    </section>
+
+    <div id="trip-quick" class="chips quick" hidden></div>
+
+    <p id="trip-status" class="status"></p>
+
+    <div id="trip-earlier-row" class="actions" hidden><button id="trip-earlier" type="button" class="page-btn" data-i18n="r.earlier">Früher</button></div>
+    <section id="trips" class="trips"></section>
+    <div id="trip-later-row" class="actions" hidden><button id="trip-later" type="button" class="page-btn" data-i18n="r.later">Später</button></div>
+  </main>
+
+  <footer>
+    <span data-i18n="footData">Daten ©</span> <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener" data-i18n="footOsm">OpenStreetMap-Mitwirkende</a> (ODbL).
+    <span data-i18n="footTimetable">Fahrplandaten:</span> <a href="https://www.delfi.de" target="_blank" rel="noopener">DELFI e.V.</a> /
+    <a href="https://gtfs.de" target="_blank" rel="noopener">gtfs.de</a> (CC BY 4.0).
+    <span data-i18n="r.footJourneys">Verbindungen: bahn.de (inoffiziell).</span>
+  </footer>
+
+  <script src="i18n.js?v=dev"></script>
+  <script src="core.js?v=dev"></script>
+  <script src="common.js?v=dev"></script>
+  <script src="stationdata.js?v=dev"></script>
+  <script src="stationmap.js?v=dev"></script>
+  <script src="route.js?v=dev"></script>
+</body>
+</html>

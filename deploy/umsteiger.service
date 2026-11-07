@@ -1,0 +1,15 @@
+[Unit]
+Description=Umsteiger live data (server.py behind Caddy)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# only reachable from the Pi itself; Caddy forwards /api/ to it
+ExecStart=/usr/bin/python3 -u /srv/umsteiger/server.py 8000 127.0.0.1
+WorkingDirectory=/srv/umsteiger/app
+DynamicUser=yes
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

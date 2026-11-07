@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Umsteiger</title>
+  <meta name="theme-color" content="#006f3c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Umsteiger">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css?v=dev">
+</head>
+<body>
+  <header class="top">
+    <h1>Umsteiger</h1>
+    <nav class="tabs">
+      <a href="./" data-i18n="nav.route">Verbindung</a>
+      <a href="departures.html" aria-current="page" data-i18n="nav.departures">Abfahrten</a>
+      <a href="station.html" data-i18n="nav.station">Bahnhof</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="card form">
+      <div id="progress" class="progress" hidden></div>
+      <div class="place-field search">
+        <label for="dep-stop" data-i18n="d.stop">Haltestelle</label>
+        <div class="search-field">
+          <input id="dep-stop" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"
+            placeholder="Haltestelle oder Bahnhof" data-i18n-attr="placeholder:d.placeholder">
+        </div>
+        <ul id="dep-stop-list" class="results"></ul>
+      </div>
+      <div class="when-row">
+        <input id="dep-when" type="datetime-local" aria-label="Ab" data-i18n-attr="aria-label:d.from">
+        <button id="dep-now" type="button" class="page-btn now-btn" data-i18n="d.now">Jetzt</button>
+      </div>
+    </section>
+
+    <div id="dep-kinds" class="chips" hidden></div>
+    <p id="dep-status" class="status"></p>
+    <section id="deps" class="card deps" hidden></section>
+    <div id="dep-later-row" class="actions" hidden><button id="dep-later" type="button" class="page-btn" data-i18n="r.later">Später</button></div>
+  </main>
+
+  <footer>
+    <span data-i18n="d.foot">Abfahrten: bahn.de (inoffiziell).</span>
+  </footer>
+
+  <script src="i18n.js?v=dev"></script>
+  <script src="core.js?v=dev"></script>
+  <script src="common.js?v=dev"></script>
+  <script src="departures.js?v=dev"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+.DS_Store
+rawdata/
+data/
+__pycache__/
+deploy/local.sh
+deploy/Caddyfile
+deploy/.last-deploy

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Umsteiger</title>
+  <meta name="theme-color" content="#006f3c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Umsteiger">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="style.css?v=dev">
+</head>
+<body>
+  <header class="top">
+    <h1>Umsteiger</h1>
+    <nav class="tabs">
+      <a href="./" data-i18n="nav.route">Verbindung</a>
+      <a href="departures.html" data-i18n="nav.departures">Abfahrten</a>
+      <a href="station.html" aria-current="page" data-i18n="nav.station">Bahnhof</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="search" class="card search">
+      <div class="search-field">
+        <input id="search-input" type="search" placeholder="Bahnhof suchen, z. B. Alexanderplatz"
+          autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Bahnhof"
+          data-i18n-attr="placeholder:searchPlaceholder,aria-label:station">
+        <button id="search-clear" type="button" class="clear-btn" aria-label="Eingabe löschen" data-i18n-attr="aria-label:clearInput" hidden>×</button>
+      </div>
+      <button id="nearby" type="button" class="link-btn" data-i18n="nearby">In meiner Nähe suchen</button>
+      <p id="search-status" class="hint" hidden></p>
+      <ul id="search-results" class="results"></ul>
+    </section>
+
+    <section class="card form">
+      <div id="progress" class="progress" hidden></div>
+      <div id="live-row" hidden>
+        <label for="live-time" data-i18n="arrivalAround">Ankunft gegen</label>
+        <input type="time" id="live-time" step="300">
+        <div class="live-head">
+          <label for="live" data-i18n="myTrain">Mein Zug (live)</label>
+          <button id="live-filter" type="button" class="filter-btn" aria-expanded="false" aria-controls="live-kind"></button>
+        </div>
+        <div id="live-kind" class="chips" role="group" aria-label="Verkehrsmittel" data-i18n-attr="aria-label:kinds" hidden></div>
+        <select id="live"><option value="" data-i18n="noLive">Ohne Live-Daten</option></select>
+        <p id="live-info" class="live-info" hidden></p>
+      </div>
+
+      <div id="line-row">
+        <label for="line" data-i18n="rideWith">Ich fahre mit</label>
+        <select id="line" disabled><option data-i18n="loading">Lade Daten …</option></select>
+      </div>
+
+      <label for="arr" data-i18n="arriveOn">Ich komme an auf</label>
+      <select id="arr" disabled></select>
+
+      <div id="from-row">
+        <label for="from" data-i18n="fromDir">aus Richtung</label>
+        <select id="from" disabled></select>
+      </div>
+
+      <div id="len-row" hidden>
+        <label for="len" data-i18n="trainLength">Zuglänge</label>
+        <select id="len"></select>
+      </div>
+
+      <label for="to" data-i18n="changeTo">Mein Ziel</label>
+      <select id="to" disabled><option data-i18n="loading">Lade Daten …</option></select>
+
+      <label class="check"><input type="checkbox" id="lift"> <span data-i18n="liftOnly">Nur Aufzüge (barrierefrei)</span></label>
+    </section>
+
+    <section id="result" class="card result" hidden></section>
+
+    <p id="status" class="status"></p>
+
+    <section class="card map-card">
+      <div id="alts-row" class="alts-row" hidden>
+        <label for="alts" data-i18n="allAccesses">Alle Zugänge an diesem Bahnsteig</label>
+        <select id="alts"></select>
+      </div>
+      <div id="map" aria-label="Karte des Bahnhofs" data-i18n-attr="aria-label:mapLabel"></div>
+      <p id="map-hint" class="hint" data-i18n="mapHint">Tippe auf einen anderen Zugang in der Karte oder Liste, wenn die Empfehlung nicht passt – deine Wahl wird gespeichert.</p>
+      <p class="hint point-clear-row"><button id="point-clear" type="button" class="link-btn" data-i18n="pointClear" hidden>Punkt entfernen</button></p>
+    </section>
+
+    <div class="actions">
+      <button id="reload" type="button" data-i18n="reload">Daten neu laden</button>
+      <span id="stored" class="stored" hidden></span>
+    </div>
+  </main>
+
+  <footer>
+    <span data-i18n="footData">Daten ©</span> <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener" data-i18n="footOsm">OpenStreetMap-Mitwirkende</a> (ODbL).
+    <span data-i18n="footTimetable">Fahrplandaten:</span> <a href="https://www.delfi.de" target="_blank" rel="noopener">DELFI e.V.</a> /
+    <a href="https://gtfs.de" target="_blank" rel="noopener">gtfs.de</a> (CC BY 4.0).
+    <span data-i18n="footNote">Positionen gelten für volle Zuglänge; Kurzzüge können abweichen.</span>
+    <span id="data-date"></span>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="i18n.js?v=dev"></script>
+  <script src="core.js?v=dev"></script>
+  <script src="common.js?v=dev"></script>
+  <script src="stationdata.js?v=dev"></script>
+  <script src="stationmap.js?v=dev"></script>
+  <script src="app.js?v=dev"></script>
+</body>
+</html>
