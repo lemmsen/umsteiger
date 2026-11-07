@@ -108,7 +108,7 @@ protection is not worked around.
   first). *(07.11.2026)* Left: Transitous does not find "U Kochstr" (the stop is called "U Kochstr.
   (Checkpoint Charlie)") – report upstream.
 - [x] Finding 2 in part: "Fern 6" counts as track 6. Finding 7: Berlin Hbf track 4. *(07.11.2026)*
-- [ ] Finding 8 (FlixBus) – decide with the user.
+- [x] Finding 8 (FlixBus): the user wants them shown – nothing to do. *(07.11.2026)*
 - [x] Deployed (07.11.2026).
 
 ### Step 6 – Class C
