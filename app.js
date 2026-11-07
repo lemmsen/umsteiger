@@ -465,7 +465,7 @@
       .map(([label, products]) => [label, liveArrivals.filter(a => products.includes(a.product))]).filter(([, l]) => l.length);
     const option = (a) => {
       const i = liveArrivals.indexOf(a), d = delayMin(a), gl = a.rtPlatform || a.platform;
-      return `<option value="${i}">${hm(a.time)}${d > 0 ? ` → ${hm(a.rtTime)}` : ''} ${esc(t('liveTrain', { name: a.name, from: a.from || '?' }))}` +
+      return `<option value="${i}">${hm(a.time)}${d > 0 ? ` → ${hm(a.rtTime)}` : ''} ${esc(t('liveTrain', { name: a.name || t('trainNoName'), from: a.from || '?' }))}` +
         `${gl ? ' · ' + esc(t('trackShort', { n: gl })) : ''}</option>`;
     };
     const empty = !chosen.length ? t('chooseKind') : t('noArrivals', liveWindow);

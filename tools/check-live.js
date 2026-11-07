@@ -6,7 +6,7 @@
  *
  *   python3 server.py 8765 127.0.0.1 &
  *   node tools/check-live.js [--base http://localhost:8765] [--when 2026-11-09T07:45] [--journeys 3]
- *                            [--out report.json] [cases.json …]
+ *                            [--near lat,lon] [--out report.json] [cases.json …]
  *
  * Default cases: tools/live-cases.json, plus tools/live-cases.local.json if it exists (private, not in Git).
  * Needs the prepared station data in data/ (tools/prepare-gtfs.js, tools/prepare-osm.js).
@@ -23,6 +23,8 @@ const BASE = opt('base', 'http://localhost:8765');
 const WHEN = opt('when', '');
 const PER_CASE = Number(opt('journeys', 3));
 const OUT = opt('out', '');
+// The app prefers places near home or the last journey; here: the default station of the app (Gesundbrunnen)
+const NEAR = opt('near', '52.5486,13.3886').split(',');
 const files = args.length ? args : ['live-cases.json', 'live-cases.local.json']
   .map(f => path.join(__dirname, f)).filter(f => fs.existsSync(f));
 const cases = { journeys: [], departures: [], arrivals: [] };
@@ -47,7 +49,7 @@ const whenParam = () => WHEN ? '&when=' + encodeURIComponent(WHEN) : '';
 // "lat,lon" stays, otherwise the first hit of the place search (a station when kind is 'station')
 async function place(q, kind) {
   if (/^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(q)) return { id: q, name: q, kind: 'point' };
-  const { places } = await api('places?q=' + encodeURIComponent(q));
+  const { places } = await api('places?q=' + encodeURIComponent(q) + (NEAR.length === 2 ? `&lat=${NEAR[0]}&lon=${NEAR[1]}` : ''));
   const hit = places.find(p => !kind || p.kind === kind) || null;
   if (!hit) throw new Error('place not found: ' + q);
   return hit;

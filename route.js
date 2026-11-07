@@ -82,7 +82,7 @@
       timer = setTimeout(async () => {
         asked = q;
         try {
-          const res = await api('places?q=' + encodeURIComponent(q));
+          const res = await api('places?q=' + encodeURIComponent(q) + C.nearHint(places[which === 'from' ? 'to' : 'from']));
           if (asked === q) show(res.places.map(p => ({ label: p.name, sub: PLACE_KIND[p.kind], run: () => choosePlace(which, p) })));
         } catch (e) { noServer(e); }
       }, 250);
@@ -415,7 +415,7 @@
     $('trips').innerHTML = list.map((j, i) => {
       const first = j.legs[0], last = j.legs[j.legs.length - 1];
       const lines = j.legs.filter(l => l.mode === 'transit')
-        .map(l => `<span class="line-chip ${kindClass(l.product)}">${esc(l.line)}</span>`).join('');
+        .map(l => `<span class="line-chip ${kindClass(l.product)}">${esc(l.line || t('trainNoName'))}</span>`).join('');
       return `<article class="card trip${i === opened ? ' open' : ''}" data-i="${i}">
         <button type="button" class="trip-head" aria-expanded="${i === opened}">
           <span class="trip-times">${timeHtml(first.from)} – ${timeHtml(last.to)}</span>
@@ -541,7 +541,7 @@
       // Straight line first, the course of the leg as soon as it is there
       const color = LINE_COLOR[kindClass(l.product)];
       const line = L.polyline([pos(l.from), pos(l.to)], { color, weight: 5, opacity: 0.9 }).addTo(layer);
-      line.bindTooltip(l.line + (l.direction ? ' · ' + t('r.towards', { to: l.direction }) : ''), { sticky: true });
+      line.bindTooltip((l.line || t('trainNoName')) + (l.direction ? ' · ' + t('r.towards', { to: l.direction }) : ''), { sticky: true });
       if (!l.journeyId) continue;
       legShape(l).then(sh => {
         if (!sh || maps.get(key) !== map) return;
@@ -605,7 +605,7 @@
         return `<div class="leg walk">${esc(t('r.walkLeg', { m: Math.round(l.distance || 0) }))}</div>`;
       }
       return `<div class="leg">
-        <div class="leg-line"><span class="line-chip ${kindClass(l.product)}">${esc(l.line)}</span>
+        <div class="leg-line"><span class="line-chip ${kindClass(l.product)}">${esc(l.line || t('trainNoName'))}</span>
           ${l.direction ? `<span class="muted">${esc(t('r.towards', { to: l.direction }))}</span>` : ''}
           ${l.cancelled ? `<span class="late">${esc(t('r.cancelled'))}</span>` : ''}</div>
         ${stopHtml(l.from, l.cancelled)}

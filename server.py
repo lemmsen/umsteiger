@@ -12,7 +12,8 @@ sources, see https://transitous.org/sources/), translated into the compact forma
   /api/train?journeyId=<trip>&eva=<id>[&stop=<id>&lat=&lon=]
                                             one train at one station: platform and direction of arrival
                                             (from the course of the line)
-  /api/places?q=<text>                      stations, stops, addresses and places for a search text
+  /api/places?q=<text>[&lat=&lon=]          stations, stops, addresses and places for a search text
+                                            (places near lat/lon first)
   /api/journeys?from=<id>&to=<id>[&when=<YYYY-MM-DDTHH:MM>][&arrive=1][&page=<cursor>]
                                             connections from A to B (ids from /api/places, or "lat,lon")
   /api/journey?id=<id>                      one journey of /api/journeys again, with current real-time data
@@ -52,6 +53,9 @@ SHAPE_TOLERANCE = 15      # m: simplification of the course of a leg
 MAX_NOTES = 5             # messages per journey, leg or stop
 NEARBY_RADIUS = 1000      # m: stops this close can name a point on the map
 NEARBY_MAX = 12
+PLACE_BIAS = 3            # how strongly the place search prefers places near the user (Transitous default 1)
+LONG_WALK = 500           # m on foot in a journey from which a quicker journey with less walking replaces it
+WALK_SAVED = 300          # m: … when that one walks at least this much less
 HOUR = 3600
 RAIL_MODES = ['HIGHSPEED_RAIL', 'LONG_DISTANCE', 'NIGHT_RAIL', 'REGIONAL_FAST_RAIL', 'REGIONAL_RAIL',
               'RAIL', 'SUBURBAN', 'SUBWAY', 'METRO']
@@ -218,8 +222,11 @@ def approach_point(route, lat, lon):
 
 # ---------- Translation into the app's format ----------
 
-def product_of(mode, name):
+def product_of(mode, name, place=None):
     p = PRODUCT.get(mode, 'BUS')
+    # Trains added in real time (e.g. a replacement ICE) come without kind and name: a stop with a track is a train
+    if mode == 'OTHER' and place and re.match(r'^\d', str(place.get('track') or place.get('scheduledTrack') or '')):
+        return 'REGIONAL'
     # S-Bahn and U-Bahn lines that a data source files under regional or other rail
     if p in ('REGIONAL', 'EC_IC') and re.match(r'^S ?\d', name or ''):
         return 'SBAHN'
@@ -231,6 +238,8 @@ def product_of(mode, name):
 def line_name(x):
     """Line as shown: 'S1', 'U8', 'Bus 862', 'Tram M10', 'RE3', 'ICE 936'."""
     name = (x.get('displayName') or x.get('routeShortName') or x.get('tripShortName') or '').strip()
+    if name == '?':
+        name = ''   # trains added in real time have no name
     name = re.sub(r'^([SU]) (\d+)$', r'\1\2', name)   # 'S 2' = 'S2'
     product = PRODUCT.get(x.get('mode'))
     if product == 'BUS' and name and not name.lower().startswith('bus'):
@@ -304,7 +313,7 @@ def leg_of(l):
     stops = leg_stops(l)
     prev, nxt = stops[-2], stops[1]
     name = line_name(l)
-    return {'mode': 'transit', 'line': name, 'product': product_of(l.get('mode'), name),
+    return {'mode': 'transit', 'line': name, 'product': product_of(l.get('mode'), name, l['from']),
             'direction': l.get('headsign'), 'journeyId': l.get('tripId'), 'duration': l.get('duration'),
             'from': stop_of(l['from'], 'departure', rt), 'to': stop_of(l['to'], 'arrival', rt),
             'stops': len(stops) - 2,
@@ -322,7 +331,12 @@ def journey_of(it):
 # ---------- API ----------
 
 def api_places(q):
-    res = fetch('/v1/geocode', {'text': q['q']})
+    params = {'text': q['q']}
+    if q.get('lat') and q.get('lon'):
+        # Places near the user first ("Kochstraße" in Berlin, not in Ahlbeck); far places still come first
+        # when the text names them ("München Hbf")
+        params.update(place=f"{float(q['lat']):.4f},{float(q['lon']):.4f}", placeBias=PLACE_BIAS)
+    res = fetch('/v1/geocode', params)
     out = []
     for p in res:
         kind = {'STOP': 'station', 'ADDRESS': 'address', 'PLACE': 'place'}.get(p.get('type'))
@@ -378,12 +392,26 @@ def api_nearby(q):
     return {'stop': out[0] if out else None, 'stops': out}
 
 
+def walked(it):
+    return sum(l.get('distance') or 0 for l in it.get('legs', []) if l.get('mode') == 'WALK')
+
+
+def without_long_walks(its):
+    """Transitous keeps journeys with fewer changes even when they need up to 15 minutes on foot (S-Bahn and then
+    900 m instead of one stop on the U-Bahn). Such a journey is left out when another one of the answer leaves
+    no earlier, arrives no later and needs much less walking – the planners people know do not show it either."""
+    def better(b, a):
+        return (b is not a and b.get('startTime', '') >= a.get('startTime', '') and b.get('endTime', '') <= a.get('endTime', '')
+                and walked(b) <= walked(a) - WALK_SAVED)
+    return [a for a in its if walked(a) < LONG_WALK or not any(better(b, a) for b in its)]
+
+
 def api_journeys(q):
     params = {'fromPlace': place_param(q['from']), 'toPlace': place_param(q['to']),
               'time': utc_param(q.get('when')), 'arriveBy': 'true' if q.get('arrive') == '1' else 'false',
               'pageCursor': q.get('page')}
     res = fetch('/v6/plan', params)
-    return {'journeys': [journey_of(it) for it in res.get('itineraries', [])],
+    return {'journeys': [journey_of(it) for it in without_long_walks(res.get('itineraries', []))],
             'earlier': res.get('previousPageCursor'), 'later': res.get('nextPageCursor')}
 
 
@@ -408,7 +436,7 @@ def api_departures(q):
         rt = bool(e.get('realTime'))
         s = stop_of(p, 'departure', rt)
         name = line_name(e)
-        out.append({'journeyId': e.get('tripId'), 'line': name, 'product': product_of(e.get('mode'), name),
+        out.append({'journeyId': e.get('tripId'), 'line': name, 'product': product_of(e.get('mode'), name, p),
                     'direction': e.get('headsign'), 'via': [x.get('name') for x in (e.get('nextStops') or [])[:3]],
                     'stop': p.get('stopId'), 'time': s['time'], 'rtTime': s['rtTime'],
                     'track': s['track'], 'rtTrack': s['rtTrack'],
@@ -470,7 +498,7 @@ def api_arrivals(q):
         if not s['time']:
             continue   # the train starts here
         name = line_name(e)
-        out.append({'journeyId': e.get('tripId'), 'name': name, 'product': product_of(e.get('mode'), name),
+        out.append({'journeyId': e.get('tripId'), 'name': name, 'product': product_of(e.get('mode'), name, p),
                     'time': s['time'], 'rtTime': s['rtTime'], 'stop': p.get('stopId'),
                     'platform': s['track'], 'rtPlatform': s['rtTrack'], 'from': (e.get('tripFrom') or {}).get('name')})
     return {'arrivals': out}

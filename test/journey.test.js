@@ -82,6 +82,18 @@ assert.strictEqual(U.findPlatform(st, { product: 'UBAHN', line: 'U9', track: '2 
   'U-Bahn by line, not the train platform that also has a track 2');
 assert.strictEqual(U.findPlatform(st, { product: 'REGIONAL', line: 'RE9', track: '7' }), null, 'unknown track: no guess');
 assert.strictEqual(U.findPlatform(st, { product: 'BUS', line: 'Bus 100', track: '1' }), null, 'bus: no platform model');
+assert.strictEqual(U.trackOf('Fern 6'), '6', 'word before the number (Frankfurt Flughafen Fernbahnhof)');
+assert.strictEqual(U.trackOf(''), '');
+
+// The same track number on a second OSM object without lines or kind of train (Berlin Hbf: track 4 twice):
+// the platform with information counts
+const rawDup = { elements: raw.elements.concat([way(3, { railway: 'platform', ref: '1' }, [[-100, 30], [100, 30]])]) };
+let stDup = U.buildStation(rawDup, center);
+U.applyLookup(stDup, { elements: [] });
+U.applyTimetable(stDup, tt);
+stDup = U.finalize(stDup);
+assert.ok(stDup.platforms.w3, 'second object with track 1 is a platform of the model');
+assert.strictEqual(U.findPlatform(stDup, { product: 'SBAHN', line: 'S1', track: '1' }), 'w1', 'duplicate track: the known platform');
 
 console.log('journey.test.js: matching passed');
 

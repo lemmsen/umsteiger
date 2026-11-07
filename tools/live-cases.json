@@ -32,7 +32,7 @@
     { "name": "U7 to U8 at Hermannplatz",
       "from": "Karl-Marx-Straße Berlin", "fromKind": "station", "to": "Schönleinstraße Berlin", "toKind": "station" },
     { "name": "U6 to U7 at Mehringdamm",
-      "from": "Kochstraße Berlin", "fromKind": "station", "to": "Gneisenaustraße Berlin", "toKind": "station" },
+      "from": "Kochstr. Checkpoint Charlie", "fromKind": "station", "to": "Gneisenaustraße Berlin", "toKind": "station" },
     { "name": "U5 to U3/U6 at Odeonsplatz (München)",
       "from": "Lehel München", "fromKind": "station", "to": "Universität München", "toKind": "station" },
     { "name": "ICE to S at Köln Messe/Deutz",

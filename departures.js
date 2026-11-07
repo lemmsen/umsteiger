@@ -68,7 +68,7 @@
     timer = setTimeout(async () => {
       asked = q;
       try {
-        const res = await api('places?q=' + encodeURIComponent(q));
+        const res = await api('places?q=' + encodeURIComponent(q) + C.nearHint(stop));
         if (asked === q) showList(res.places.filter(p => p.kind === 'station' && p.eva).map(p => ({ label: p.name, run: () => chooseStop(p) })));
       } catch (e) { noServer(e); }
     }, 250);
@@ -179,7 +179,7 @@
       return `<div class="dep${open ? ' open' : ''}" data-i="${i}">
         <button type="button" class="dep-head" aria-expanded="${open}">
           <span class="dep-time">${timeHtml(d, d.cancelled)}</span>
-          <span class="dep-line"><span class="line-chip ${kindOf(d.product)[2]}">${esc(d.line)}</span></span>
+          <span class="dep-line"><span class="line-chip ${kindOf(d.product)[2]}">${esc(d.line || t('trainNoName'))}</span></span>
           <span class="dep-dir">${esc(short(d.direction || ''))}${d.cancelled ? ` <span class="late">${esc(t('r.cancelled'))}</span>` : ''}
             ${d.via.length ? `<small>${esc(t('d.via', { stops: d.via.map(short).join(', ') }))}</small>` : ''}
             ${high.map(n => `<small class="minor">${esc(n.text)}</small>`).join('')}</span>

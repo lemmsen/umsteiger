@@ -1207,8 +1207,8 @@ node["railway"~"^(${ENTRANCES}|buffer_stop)$"]${a}->.exits;
   const SAME_STATION_WALK = 300;    // m: a walk this short between two legs is a change within the station
 
   const routeTypeOf = (product) => PRODUCT_TYPE[product] || null;
-  // "1 (U8)" -> "1", "9 D-G" (track with sections) -> "9", " 16 " -> "16"
-  const trackOf = (s) => (s || '').trim().split(/\s+/)[0];
+  // "1 (U8)" -> "1", "9 D-G" (track with sections) -> "9", " 16 " -> "16", "Fern 6" (Frankfurt Flughafen) -> "6"
+  const trackOf = (s) => (s || '').trim().split(/\s+/).find(w => /\d/.test(w)) || '';
   // "Schillingstr." (timetable, city removed) is the stop "Schillingstr.(U), Berlin" (journey planner)
   const sameStop = (short, long) => { const a = tokens(short), b = new Set(tokens(long)); return a.length > 0 && a.every(w => b.has(w)); };
 
@@ -1281,7 +1281,11 @@ node["railway"~"^(${ENTRANCES}|buffer_stop)$"]${a}->.exits;
     if (isU && withLine.length) cands = withLine;
     const track = trackOf(leg.track);
     const tracks = (pl) => [pl.tags.ref, pl.tags.local_ref, pl.tags['railway:track_ref']].flatMap(splitRefs);
-    const byTrack = track ? cands.filter(pl => tracks(pl).includes(track)) : [];
+    let byTrack = track ? cands.filter(pl => tracks(pl).includes(track)) : [];
+    // A second object with the same track number but nothing else known (Berlin Hbf: track 4 twice in OSM):
+    // the platform with lines or a kind of train counts
+    const known = byTrack.filter(pl => pl.refs.length || typesAt[pl.key] || ['train', 'light_rail', 'subway'].some(k => pl.tags[k] === 'yes'));
+    if (byTrack.length > 1 && known.length) byTrack = known;
     if (byTrack.length === 1) return byTrack[0].key;
     if (byTrack.length > 1) cands = byTrack;
     else if (!isU) cands = withLine.length ? withLine : [];

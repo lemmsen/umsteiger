@@ -96,12 +96,20 @@ protection is not worked around.
 - [ ] Compare with the baseline; table "bahn.de vs. Transitous" per measure.
 
 ### Step 4 – Classify and decide
-- [ ] Every gap gets a class (A–D) and a size (how many cases, how bad for the user).
+- [x] Every gap gets a class (A–D) and a size (see findings). *(07.11.2026)* The user: tracks change often in
+  Berlin – the planned track is only a hint, the real-time track counts (the app already prefers it).
 - [ ] Ordered list of fixes; short summary for the user in German.
 
 ### Step 5 – Fix classes A and B
-- [ ] One fix per commit, with a synthetic test in `test/` where it concerns `core.js`.
-- [ ] Run the check script again after every fix; deploy when a group of fixes is done.
+- [x] Finding 1, long walks: `without_long_walks()` in `server.py`. *(07.11.2026)* Monday morning: no Berlin
+  case starts with a long walk any more; changes with advice 33 of 41 (before 19 of 27).
+- [x] Finding 3, trains without a name: train when the stop has a track, line shown as "Zug". *(07.11.2026)*
+- [x] Finding 5, place search: places near home / the last journey first (`placeBias` 3; "München Hbf" still
+  first). *(07.11.2026)* Left: Transitous does not find "U Kochstr" (the stop is called "U Kochstr.
+  (Checkpoint Charlie)") – report upstream.
+- [x] Finding 2 in part: "Fern 6" counts as track 6. Finding 7: Berlin Hbf track 4. *(07.11.2026)*
+- [ ] Finding 8 (FlixBus) – decide with the user.
+- [ ] Deploy (07.11.2026).
 
 ### Step 6 – Class C
 - [ ] Report data gaps to Transitous (with examples).

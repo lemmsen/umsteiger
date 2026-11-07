@@ -26,6 +26,15 @@
   };
 
   // JSON from server.py (api/…); errors carry the HTTP status
+  // Position for the place search to prefer (it finds "Kochstraße" near the user first, not in Ahlbeck):
+  // the places given, else home, work, the last journey, the last departures stop. '' when none is known.
+  function nearHint(...first) {
+    const fav = readJson('umsteiger:fav', {}) || {}, trip = readJson('umsteiger:trip', {}) || {};
+    const p = first.concat([fav.home, fav.work, trip.from, trip.to, readJson('umsteiger:depstop', null)])
+      .find(x => x && isFinite(x.lat) && isFinite(x.lon) && x.lat !== null);
+    return p ? `&lat=${Number(p.lat).toFixed(4)}&lon=${Number(p.lon).toFixed(4)}` : '';
+  }
+
   async function api(path) {
     const res = await fetch('api/' + path);
     const data = await res.json().catch(() => ({}));
@@ -95,6 +104,6 @@
   }
   const tailWarning = (r) => r.method === 'walk' && r.tail >= U.TAIL_WARN ? t('warnTail', { m: r.tail }) : '';
 
-  window.Common = { walkText, tailWarning, applyTexts, store, readJson, api, loadLeaflet, statusLine, progress, esc, pad, hm, delay, localTime,
+  window.Common = { walkText, tailWarning, applyTexts, store, readJson, nearHint, api, loadLeaflet, statusLine, progress, esc, pad, hm, delay, localTime,
     timeHtml, trackHtml };
 })();
