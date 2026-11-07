@@ -76,21 +76,23 @@ protection is not worked around.
 ## Steps
 
 ### Step 1 – Baseline
-- [ ] Extract the earlier API outputs from the session logs into a local summary: per endpoint and kind
-  of train, how often track, real time, notes, coach sequence were filled; which journeys were asked
-  and what came back (B2).
-- [ ] List the fields of the old `server.py` that the new one no longer fills (B3).
-- [ ] Write the result into this file (section "Findings"), without personal data.
+- [x] Extract the earlier API outputs from the session logs (B2). *(07.11.2026)* Full answers were hardly
+  kept, mostly printed summaries; usable: nine journeys with tracks, real time and advice, one departures
+  board (Gesundbrunnen), one live arrival. They are the `expect` entries in `tools/live-cases.json`.
+- [x] Fields of the old `server.py` that the new one no longer fills (B3): coach sequence (`sequence`);
+  everything else exists, but is filled less often (see findings).
+- [x] Result in "Findings" below. *(07.11.2026)*
 
 ### Step 2 – Check script
-- [ ] `tools/check-live.js`: reads the cases, asks the local `server.py`, runs the journeys through
+- [x] `tools/check-live.js` *(07.11.2026)*: reads the cases, asks the local `server.py`, runs the journeys through
   `journeyStops()` → `transferAdvice()` with the prepared station data (as `route.js` does) and prints
   the measures above as a table plus a JSON report (in the scratchpad, not in Git).
-- [ ] `tools/live-cases.json` (public set) and the private set from the Pi log.
+- [x] `tools/live-cases.json` (public set). *(07.11.2026)*
+- [ ] Private set from the Pi log.
 
 ### Step 3 – Measure
-- [ ] Runs on a weekday morning (7–9), midday, evening and on a weekend day – real time and messages
-  depend on the time.
+- [x] Saturday evening 07.11.2026, live (with real time). Timetable for Monday 09.11.2026 07:45 (without real time).
+- [ ] Live on a weekday morning (7–9) – real time and messages depend on the time.
 - [ ] Compare with the baseline; table "bahn.de vs. Transitous" per measure.
 
 ### Step 4 – Classify and decide
@@ -114,4 +116,55 @@ protection is not worked around.
 
 ## Findings
 
-(filled in during steps 1–4)
+### bahn.de (checked 07.11.2026)
+
+Not a changed interface but a block in front of it: every path under `/web/api/` – also one that does not
+exist – answers Akamai's "403 Access Denied" to a client that names itself; the home page answers 200.
+Since November even the place search (`orte`) is blocked, which still answered at the switch. The host of
+the DB Navigator app interface (`app.vendo.noncd.db.de`) no longer resolves. Nothing to adapt on our side.
+
+### Transitous against bahn.de (runs of 07.11.2026, 19 journeys, 5 departures boards, 3 arrival lists)
+
+Ordered by how much the user notices it. Class: A our translation, B our logic, C data at Transitous,
+D gone.
+
+1. **Long walks instead of a change (A, biggest).** Transitous (MOTIS) keeps journeys with fewer changes
+   even when they need up to 15 minutes on foot, and lists them first by departure. In almost every Berlin
+   case one or two of the first three journeys are of this kind: Bornholmer Str. → Voltastr.: S-Bahn and
+   then 925 m on foot instead of one stop on the U8; Humboldthain → Voltastr.: 925 m to the U8; U5 → walk
+   757 m instead of changing at Alexanderplatz; Ostkreuz 885 m, Hermannplatz 880 m; Eberswalde 991 m
+   instead of bus 862. bahn.de showed the change. The good journey is there, just further down.
+   Options: shorter walks before/after the ride in the request (`maxPreTransitTime`,
+   `maxPostTransitTime`, 900 s by default), or hiding a journey with a long walk when another arrives
+   about as early.
+2. **Tracks missing or wrong outside Berlin (C, partly A).**
+   - Berlin S-Bahn: no tracks (known). The platform still comes from line and direction – right in
+     every case checked (Gesundbrunnen from north and south as with bahn.de).
+   - Hamburg Hbf, Köln Hbf: planned tracks missing for ICE and S-Bahn; they come only with real time
+     shortly before → no advice for journeys later in the day (`noPlatform`).
+   - Köln/Bonn area (VRS): the planned "track" is a stop-point code (94, 91, 74, 80, 87); the real one
+     comes only with real time → wrong "track change 94 → 12" and no platform.
+   - Frankfurt Flughafen: "Fern 6" → our `trackOf()` reads "Fern" (A/B, easy).
+3. **Extra trains without a name (A).** Trains added in real time (e.g. a replacement ICE Berlin → Hamburg)
+   come as mode `OTHER`, name "?" → shown as bus "?" without advice. Can be shown as a train with its
+   destination and track.
+4. **No disruption messages (C).** 0 messages in all runs (bahn.de: e.g. "Reparatur an der Strecke").
+   Check again on a weekday.
+5. **Place search without location (A).** "Kochstraße Berlin" → "Ahlbeck, Kochstraße". The search can be
+   biased to a position (`place`), e.g. the user's location or last place.
+6. **Different planned track (data question).** RE3 from Eberswalde at Gesundbrunnen: track 8 at
+   Transitous (November data), 6/7 in our timetable (October) and at bahn.de (23.10.) → other advice
+   (middle, lift, 39 m instead of front, escalator, 120 m). Which one is right can only be seen on site.
+7. **Berlin Hbf track 4 (B, independent of the provider).** Two OSM platforms carry ref 4 → `findPlatform()`
+   gives up (`noTarget`). Prefer the platform with train/line information.
+8. **Coaches in the results (A, small).** FlixBus (also to Milan) and FlixTrain appear; bahn.de showed no
+   FlixBus.
+9. **Coach sequence (D).** Gone.
+
+Better than with bahn.de: real time for U-Bahn and bus (bahn.de had none for BVG): departures U-Bahn 55 %,
+bus 88 %, S-Bahn about 80 %; course of U-Bahn and bus legs as a real line; answers fast (journeys median
+0.3 s). "My train (live)": platform found for all arrivals checked at Gesundbrunnen, Alexanderplatz and
+Hamburg Hbf, also for the S-Bahn without track.
+
+Advice per change (Monday morning, timetable): 19 of 27 changes with advice, 2 "same platform",
+5 without platform (Hamburg Hbf, Köln), 1 without target (Berlin Hbf track 4).
