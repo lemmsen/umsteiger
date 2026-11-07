@@ -5,3 +5,4 @@ __pycache__/
 deploy/local.sh
 deploy/Caddyfile
 deploy/.last-deploy
+tools/live-cases.local.json

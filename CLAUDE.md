@@ -64,7 +64,7 @@ Talk to the user in **German**. **Code, identifiers and comments in English** (a
 - Open: at Stuttgart Hbf the walk routing computes over 900 m from the S-Bahn to the Stadtbahn – check the footway network there.
 
 ## Next steps
-1. Check the Transitous data on the road (tracks, real time, which feeds); a source for coach sequences would bring back the train position.
+1. Close the gaps between Transitous and the former bahn.de data: plan and findings in `PLAN-TRANSITOUS.md` (baseline, check script, classes of causes, fixes); a source for coach sequences would bring back the train position.
 2. Footway routing (done 01.10.2026). Open: levels (`level`) are evaluated only for loose ends; connections otherwise come from shared OSM nodes alone – check on site whether the ways are plausible.
 3. Later: lift outages (DB FaSta), Web Push on delays.
 
