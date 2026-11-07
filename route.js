@@ -311,7 +311,7 @@
   let result = null;      // last answer of /api/journeys
   let opened = null;      // index of the expanded journey
 
-  // bahn.de offers nothing for short distances: then walking is the answer
+  // No journey for short distances: then walking is the answer
   const NEAR_WALK = 1000;   // m
   function near(a, b) {
     if (!a || !b || a.lat == null || b.lat == null) return false;
@@ -368,7 +368,7 @@
   const changesText = (n) => n ? t(n === 1 ? 'r.change1' : 'r.changes', { n }) : t('r.direct');
   const timeHtml = C.timeHtml;
   const trackHtml = (s) => { const h = C.trackHtml(s); return h ? ' ' + h : ''; };
-  // Messages of bahn.de: important ones as a warning, the others folded away
+  // Messages of the journey planner: important ones as a warning, the others folded away
   function notesHtml(notes) {
     const high = (notes || []).filter(n => n.high), low = (notes || []).filter(n => !n.high);
     return high.map(n => `<p class="warn">${esc(n.text)}</p>`).join('') + (low.length
@@ -377,7 +377,7 @@
   const stopHtml = (s, gone) => `<div class="leg-stop">${timeHtml(s, gone)} ${esc(s.name)}${trackHtml(s)}` +
     `${s.cancelled ? ` <span class="late">${esc(t('r.stopCancelled'))}</span>` : ''}</div>${notesHtml(s.notes)}`;
 
-  // Is there enough time to change? Before the station model is loaded with the walks of bahn.de, then
+  // Is there enough time to change? Before the station model is loaded with the walks of the journey planner, then
   // with the walk of the recommendation (connTimes, per journey and leg)
   const connTimes = new Map();
   const CONN_RANK = { ok: 0, tight: 1, risk: 2, cancelled: 3 };
@@ -444,7 +444,7 @@
     `<span class="row-btns"><button type="button" class="link-btn route-btn" aria-expanded="${routeOpen}">${esc(t(routeOpen ? 'r.routeHide' : 'r.routeShow'))}</button>` +
     `<button type="button" class="link-btn refresh-btn">${esc(t('r.refresh'))}</button></span></div>` +
     `<div class="route-map"${routeOpen ? '' : ' hidden'}></div>`;
-  // What the user sees of a journey (without the id, which bahn.de renews every time)
+  // What the user sees of a journey (without the id, which may change on refresh)
   const visible = (j) => JSON.stringify([j.legs, j.notes]);
   let refreshing = false;
   async function refresh(quiet) {
@@ -461,7 +461,7 @@
       if (visible(res.journey) === visible(j)) {
         document.querySelector('.trip.open .refresh-row .muted').textContent = t('r.asOf', { time: clock(j.at) });
       } else {
-        // Keep the id of the search (bahn.de sends a new one every time): times to change are stored under it
+        // Keep the id of the search (a refresh may send a new one): times to change are stored under it
         for (const k of [...connTimes.keys()]) if (k.startsWith(j.id + '|')) connTimes.delete(k);
         result.journeys[i] = Object.assign(res.journey, { id: j.id, at: j.at });
         renderTrips();
@@ -480,7 +480,7 @@
     if (document.visibilityState === 'visible' && j && Date.now() - (j.at || result.at) > REFRESH_SECONDS * 1000) refresh(true);
   });
 
-  // ----- Stops on the way of a leg (from /api/shape, like the map) -----
+  // ----- Stops on the way of a leg (from the course of the leg, like the map) -----
 
   const stopsOpen = new Set();   // '<journey>:<leg>'
   const stopsHtml = (l, i) => {
@@ -514,16 +514,8 @@
   const ROUTE_KEY = 'umsteiger:routemap';   // map of the journey open (remembered)
   let routeOpen = store.get(ROUTE_KEY) === '1';
   const LINE_COLOR = { s: '#008d4f', u: '#0065ae', b: '#95276e', t: '#cc0a22', r: '#c8102e' };
-  const shapes = new Map();   // course of a leg from /api/shape (line and stops on the way)
-  function legShape(l) {
-    const key = [l.journeyId, l.from.eva, l.to.eva].join('|');
-    if (!shapes.has(key)) {
-      const q = `journeyId=${encodeURIComponent(l.journeyId)}&from=${encodeURIComponent(l.from.eva || '')}&to=${encodeURIComponent(l.to.eva || '')}` +
-        `&flat=${l.from.lat}&flon=${l.from.lon}&tlat=${l.to.lat}&tlon=${l.to.lon}`;
-      shapes.set(key, api('shape?' + q).catch(() => { shapes.delete(key); return null; }));
-    }
-    return shapes.get(key);
-  }
+  // Course of a leg (line and stops on the way): comes with the journey
+  const legShape = (l) => Promise.resolve(l.shape || null);
 
   async function drawRoute(j) {
     const box = document.querySelector('.trip.open .route-map');
@@ -690,7 +682,9 @@
 
   // Arriving train with its coach sequence (like "Mein Zug (live)" in the station view); only kinds of train
   // for which DB may have one. journeyId|eva -> { info } once known (info null: none)
-  const LIVE_PRODUCTS = new Set(['ICE', 'EC_IC', 'IR', 'REGIONAL', 'SBAHN']);
+  // Empty for now: the coach sequences came from bahn.de, which blocks them since November 2026; the kinds
+  // were 'ICE', 'EC_IC', 'IR', 'REGIONAL', 'SBAHN'.
+  const LIVE_PRODUCTS = new Set();
   const liveInfo = new Map(), livePending = new Map();
   function liveTrain(a, st) {
     if (!a.journeyId || !LIVE_PRODUCTS.has(a.product)) return null;
@@ -773,7 +767,7 @@
       if (chosen === U.POINT_KEY && p) s = Object.assign({}, stop, { point: p, fromStationView: true });
       else if (chosen && exits.some(x => x.key === chosen)) s = Object.assign({}, stop, { point: chosen });
     }
-    // To a bus or tram: its stop as mapped in OSM (bahn.de gives it only roughly)
+    // To a bus or tram: its stop as mapped in OSM (the journey planner gives it only roughly)
     s = U.snapStop(st, s);
     // Live train placed by its coach sequence; otherwise the train length chosen for this station
     const plat = U.transferAdvice(st, s, { liftOnly: $('trip-lift').checked }).plat;
@@ -835,7 +829,7 @@
     if (link) link.addEventListener('click', () => {
       // Without a platform nothing is preselected but the train, which often tells the platform by its track
       const v = U.viewSelection(st, s, adv) || {};
-      // … with the arriving train under "Mein Zug (live)" (planned arrival, line, trip of bahn.de)
+      // … with the arriving train under "Mein Zug (live)" (planned arrival, line, trip of the journey planner)
       const a = stop.arrive;
       v.live = a.to.time ? { time: a.to.time, line: a.line, journeyId: a.journeyId || '', at: Date.now() } : null;
       store.set(selKey(st.id), JSON.stringify(Object.assign(readSel(st.id), v, { lift: $('trip-lift').checked })));
@@ -843,8 +837,8 @@
     });
   }
 
-  // "RE3 · hält in Abschnitt A–F" (as the line under "Mein Zug (live)"); line as in the journey (bahn.de names
-  // regional trains by their number here)
+  // "RE3 · hält in Abschnitt A–F" (as the line under "Mein Zug (live)"); line as in the journey (the coach data
+  // named regional trains by their number)
   function liveText(info, placed, line) {
     const used = [...new Set(info.sequence.vehicles.map(v => v.sector).filter(Boolean))].sort();
     return [line || info.name, used.length && t('stopsInSection', { s: used.length > 1 ? used[0] + '–' + used[used.length - 1] : used[0] }),

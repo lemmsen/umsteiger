@@ -146,7 +146,7 @@ Learned: bahn.de accepts any coordinates as origin/destination (`A=16@X=<lon·1e
 - [x] Move the loading of station data from `app.js` into a shared file (`stationdata.js`), plus `common.js` with the helpers all pages had twice. *(22.10.2026)*
 
 ### Step 7 – Later
-- [ ] Switch the provider to Transitous (MOTIS, open data). Decided in November 2026: since then bahn.de blocks journeys, departures and arrivals for clients that are not browsers (bot protection), only the place search still answers. Transitous asks for open-source projects, hence this public repository.
+- [x] Switch the provider to Transitous (MOTIS, open data). *(07.11.2026)* Reason: since November 2026 bahn.de blocks journeys, departures, arrivals and coach sequences for clients that are not browsers (bot protection), only the place search still answers. Transitous asks for open-source projects, hence this public repository. Only `server.py` changed (plus footers and the course of a leg, which now comes with the journey). Lost: coach sequences (no open source for them). The Berlin S-Bahn has no tracks at Transitous; the platform comes from line and direction.
 - [ ] Lift outages (DB FaSta) in "step-free only".
 - [ ] Web Push on delays of the remembered commuter journey.
 

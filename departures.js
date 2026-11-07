@@ -224,7 +224,7 @@
   }
 
   function courseHtml(c, d) {
-    // This stop: by number, else by name (bahn.de gives the sub-stop, e.g. a bus stop of the station)
+    // This stop: by number, else by name (the journey planner gives the sub-stop, e.g. a bus stop of the station)
     let here = c.stops.findIndex(s => s.eva === d.stop);
     if (here < 0) here = c.stops.findIndex(s => s.name === stop.name);
     const now = Date.now();

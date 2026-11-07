@@ -1,19 +1,19 @@
 /*
- * Test for the places of the journey search: points as bahn.de locations and the lists of recent
+ * Test for the places of the journey search: points as locations with coordinates and the lists of recent
  * places and searches. Run: node test/places.test.js
  */
 'use strict';
 const assert = require('assert');
 const U = require('../core.js');
 
-// A point becomes a location id with coordinates (bahn.de reads X = longitude, Y = latitude in 1e-6 degrees)
+// A point becomes a location id with its coordinates ('lat,lon', as Transitous takes it)
 const p = U.pointPlace(52.5486, 13.3886, 'Punkt bei Gesundbrunnen');
-assert.strictEqual(p.id, 'A=16@X=13388600@Y=52548600@');
+assert.strictEqual(p.id, '52.548600,13.388600');
 assert.strictEqual(p.kind, 'point');
 assert.deepStrictEqual([p.lat, p.lon], [52.5486, 13.3886]);
 assert.strictEqual(U.pointPlace(52.5, 13.4, 'Mein Standort', 'here').kind, 'here');
 
-// Same place: stations and addresses by name (their ids change with the data version of bahn.de)
+// Same place: stations and addresses by name (their ids can change with the data)
 const a1 = { id: 'A=1@O=Berlin Gesundbrunnen@p=1@', name: 'Berlin Gesundbrunnen', kind: 'station' };
 const a2 = { id: 'A=1@O=Berlin Gesundbrunnen@p=2@', name: 'Berlin Gesundbrunnen', kind: 'station' };
 const b = { id: 'A=1@O=Berlin Alexanderplatz@', name: 'Berlin Alexanderplatz', kind: 'station' };

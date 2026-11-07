@@ -356,7 +356,7 @@
 
   // ---------- Live train (needs server.py) ----------
 
-  const EVA_KEY = 'umsteiger:eva3:' + STATION_KEY; // eva3: earlier versions could store a bus stop or a station entrance
+  const EVA_KEY = 'umsteiger:eva4:' + STATION_KEY; // eva4: stop ids of Transitous (before: bahn.de numbers)
   let live = null, liveReady = false, liveArrivals = [];
   // Train handed over by the journey search ("view station"): chosen under "Mein Zug (live)" once
   let wantLive = null;
@@ -395,7 +395,7 @@
       await loadArrivals();
       slide(els.liveRow, true);
       if (want) await pickLive(want);
-    } catch (e) { /* no server.py or bahn.de not reachable: app works without live data */ }
+    } catch (e) { /* no server.py or Transitous not reachable: app works without live data */ }
     finally {
       busy(false);
       status(...before);
@@ -512,7 +512,7 @@
     }) || null;
   }
 
-  // The train of the journey search: same trip of bahn.de, else same line and planned arrival
+  // The train of the journey search: same trip of the journey planner, else same line and planned arrival
   async function pickLive(want) {
     const i = liveArrivals.findIndex(a => want.journeyId && a.journeyId === want.journeyId);
     const a = liveArrivals[i >= 0 ? i : liveArrivals.findIndex(x => x.time === want.time && sameLine(x.name || '', want.line || ''))];

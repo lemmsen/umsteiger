@@ -66,7 +66,7 @@
   const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const pad = (n) => String(n).padStart(2, '0');
   const hm = (iso) => iso ? iso.slice(11, 16) : '';
-  // Minutes late of { time, rtTime } (planned and real time from bahn.de)
+  // Minutes late of { time, rtTime } (planned and real time from the journey planner)
   const delay = (s) => s && s.rtTime && s.time ? Math.round((new Date(s.rtTime) - new Date(s.time)) / 60000) : 0;
   // Date as the value of <input type="datetime-local">
   const localTime = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;

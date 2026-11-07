@@ -9,7 +9,7 @@ The app's texts are available in German, English, French, Italian, Spanish and J
 1. Copy the whole folder to your web server (static files; `server.py` is only needed for live data and journey search).
 2. Serve it over **HTTPS**, otherwise offline mode and the home screen app do not work properly.
 3. Local test: run `python3 server.py` in the folder, then open `http://localhost:8000`.
-   `server.py` serves the app and forwards requests for live data that the browser may not make itself (needs Python 3.9+ and `curl`). On a purely static server (or with `python3 -m http.server`) the station view still works, just without live data.
+   `server.py` serves the app and fetches journeys, departures and real-time data from [Transitous](https://transitous.org) (needs Python 3.9+). On a purely static server (or with `python3 -m http.server`) the station view still works, just without live data.
 
 ### Raspberry Pi with Caddy
 
@@ -46,7 +46,7 @@ Open the page in **Safari** → Share → **"Add to Home Screen"**. The app then
 
 Where mapped in OSM, the app also names the **platform section** (A–G, as on the signs on the platform). If there are stop signs for shorter trains, you can choose the **train length**: the app then places the train at its stop sign and adds the walk along the platform to the stairs.
 
-**My train (live)** (only with `server.py`): set the time under "Arrival around" (default: now), choose with the filters which kinds of train you want to see, then pick your train from the arrivals. The app then sets platform and direction by itself and places the train with its real coach sequence on the platform – with coach number and section.
+**My train (live)** (only with `server.py`): set the time under "Arrival around" (default: now), choose with the filters which kinds of train you want to see, then pick your train from the arrivals. The app then sets platform and direction by itself. (It used to place the train with its real coach sequence from bahn.de; bahn.de no longer answers other clients, so that is gone for now.)
 
 If a recommendation is wrong, tap the right access on the map or in the list – the choice is stored on the device.
 
@@ -94,7 +94,7 @@ All four steps in one go (downloads, prepares and copies to the Raspberry Pi): `
 
 ## Data sources
 
-Map data © OpenStreetMap contributors, ODbL. Timetable data: DELFI e.V. / gtfs.de, CC BY 4.0.
+Map data © OpenStreetMap contributors, ODbL. Timetable data: DELFI e.V. / gtfs.de, CC BY 4.0. Journeys, departures and real time: [Transitous](https://transitous.org) ([data sources](https://transitous.org/sources/)).
 
 ## Licence
 

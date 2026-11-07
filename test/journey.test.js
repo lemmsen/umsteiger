@@ -166,16 +166,16 @@ assert.deepStrictEqual([ct.minutes, ct.level], [1, 'risk']);
 // … a delayed departure gives time back
 ct = U.connectionTime({ arrive: arriveAt(null, '2026-10-22T08:05:00'), depart: departAt('2026-10-22T08:06:00', '2026-10-22T08:10:00') }, walkRec(150));
 assert.strictEqual(ct.level, 'ok');
-// Without a walk from the station model: the walks of bahn.de between the two legs
+// Without a walk from the station model: the walks of the journey planner between the two legs
 const a1 = arriveAt(), d1 = departAt('2026-10-22T08:03:00');
 ct = U.connectionTime({ arrive: a1, depart: d1 }, null, [a1, walk(here(), here(), 200), d1]);
 assert.deepStrictEqual([ct.walk, ct.need, ct.level], [200, 4, 'risk']);
 ct = U.connectionTime({ arrive: a1, depart: d1 }, { method: 'air', chosen: { dist: 20 } }, [a1, d1]);
-assert.strictEqual(ct.walk, 0, 'straight line distance does not count, no walk of bahn.de: only getting off');
+assert.strictEqual(ct.walk, 0, 'straight line distance does not count, no walk of the journey planner: only getting off');
 assert.strictEqual(U.connectionTime({ arrive: a1, depart: Object.assign({}, d1, { cancelled: true }) }).level, 'cancelled');
 assert.strictEqual(U.connectionTime({ arrive: a1, depart: null }), null, 'end of the journey');
 
-// ---------- Bus stop of bahn.de moved to the OSM platform of that name ----------
+// ---------- Bus stop of the journey planner moved to the OSM platform of that name ----------
 const node = (id, tags, x, y) => Object.assign({ type: 'node', id, tags }, ll(x, y));
 const raw4 = { elements: raw.elements.concat([
   node(801, { highway: 'bus_stop', public_transport: 'platform', name: 'Teststadt, Bahnhof (Brücke)', ref: 'Brücke' }, 150, 40),
@@ -196,7 +196,7 @@ const busAt = (name, x, y, product, next, track) => transit('Bus 862', product |
   stop('Weit', 3000, 3000), null, next || null);
 const leaveTo = (bus) => ({ kind: 'leave', arrive: s1, depart: bus, point: { lat: bus.from.lat, lon: bus.from.lon }, legIndex: 0 });
 const near = (p, x, y) => { const [px, py] = U.projector(center.lat, center.lon).xy(p.lat, p.lon); return Math.hypot(px - x, py - y) < 1; };
-// bahn.de puts "Bahnhof, Teststadt" 50 m beside the platforms on the bridge; one on each side of the street
+// The journey planner puts "Bahnhof, Teststadt" 50 m beside the platforms on the bridge; one on each side of the street
 let sn = U.snapStop(st4, leaveTo(busAt('Bahnhof, Teststadt', 120, 80, 'BUS', stop('West', -2000, 30))));
 assert.ok(near(sn.point, 150, 40), 'westwards: the platform north of the street (on the right)');
 assert.strictEqual(sn.stopRef, 'Brücke');
@@ -204,14 +204,14 @@ sn = U.snapStop(st4, leaveTo(busAt('Bahnhof, Teststadt', 120, 80, 'BUS', stop('O
 assert.ok(near(sn.point, 150, 20), 'eastwards: the platform south of the street');
 sn = U.snapStop(st4, leaveTo(busAt('Bahnhof, Teststadt', 120, 80)));
 assert.ok(near(sn.point, 150, 40), 'next stop unknown: the closer one');
-// Bus station: the bay bahn.de names, else the closest
+// Bus station: the bay the journey planner names, else the closest
 assert.ok(near(U.snapStop(st4, leaveTo(busAt('Busbahnhof, Teststadt', -150, 60, 'BUS', null, 'Bussteig C'))).point, -170, 40), 'bay C');
 assert.ok(near(U.snapStop(st4, leaveTo(busAt('Busbahnhof, Teststadt', -150, 60, 'BUS', stop('West', -2000, 30)))).point, -150, 40),
   'no bay known and more than two bays: the closest (no side rule)');
 sn = U.snapStop(st4, leaveTo(busAt('Bahnhof, Teststadt', 120, 80, 'TRAM')));
 assert.ok(near(sn.point, 120, 60), 'a tram goes to the tram stop of that name');
 sn = U.snapStop(st4, leaveTo(busAt('Rathaus, Teststadt', 120, 80)));
-assert.ok(near(sn.point, 120, 80) && sn.stopRef === null, 'no platform of that name: the point of bahn.de stays');
+assert.ok(near(sn.point, 120, 80) && sn.stopRef === null, 'no platform of that name: the point of the journey planner stays');
 sn = U.snapStop(st4, leaveTo(busAt('Bahnhof, Teststadt', 400, 400)));
 assert.ok(near(sn.point, 400, 400), 'too far from any platform of that name: stays');
 const adv4 = U.transferAdvice(st4, leaveTo(busAt('Bahnhof, Teststadt', 120, 80)));

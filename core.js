@@ -842,7 +842,7 @@ node["railway"~"^(${ENTRANCES}|buffer_stop)$"]${a}->.exits;
     return out.sort((a, b) => b.length - a.length);
   }
 
-  // ---------- Live train (server.py: route geometry and coach sequence from bahn.de) ----------
+  // ---------- Live train (server.py: route geometry; coach sequences came from bahn.de) ----------
 
   // Direction object for a live train: direction of travel from a point on its route shortly before
   // the station (or the previous stop)
@@ -1200,16 +1200,16 @@ node["railway"~"^(${ENTRANCES}|buffer_stop)$"]${a}->.exits;
 
   // ---------- Journeys (compact format of server.py /api/journeys) ----------
 
-  // bahn.de product -> route type of the station model; bus, tram, ferry have no platform model
+  // Product of the journey planner -> route type of the station model; bus, tram, ferry have no platform model
   const PRODUCT_TYPE = { ICE: 'train', EC_IC: 'train', IR: 'train', REGIONAL: 'train', SBAHN: 'light_rail', UBAHN: 'subway' };
-  const STATION_MATCH_MAX = 400;    // m: bahn.de stop -> station of data/index.json
+  const STATION_MATCH_MAX = 400;    // m: stop of the journey planner -> station of data/index.json
   const STATION_MATCH_NAMELESS = 150; // m: … without a word of the name in common
   const SAME_STATION_WALK = 300;    // m: a walk this short between two legs is a change within the station
 
   const routeTypeOf = (product) => PRODUCT_TYPE[product] || null;
   // "1 (U8)" -> "1", "9 D-G" (track with sections) -> "9", " 16 " -> "16"
   const trackOf = (s) => (s || '').trim().split(/\s+/)[0];
-  // "Schillingstr." (timetable, city removed) is the stop "Schillingstr.(U), Berlin" (bahn.de)
+  // "Schillingstr." (timetable, city removed) is the stop "Schillingstr.(U), Berlin" (journey planner)
   const sameStop = (short, long) => { const a = tokens(short), b = new Set(tokens(long)); return a.length > 0 && a.every(w => b.has(w)); };
 
   // Station of data/index.json for a stop of a journey: nearest one that shares a word of the name,
@@ -1299,11 +1299,11 @@ node["railway"~"^(${ENTRANCES}|buffer_stop)$"]${a}->.exits;
     return fit.length === 1 ? fit[0].key : null;
   }
 
-  // bahn.de gives a bus or tram stop only roughly (often the middle of the whole stop area, Eberswalde Hbf:
+  // The journey planner gives a bus or tram stop only roughly (often the middle of the whole stop area, Eberswalde Hbf:
   // 80 m beside the stop on the bridge). The OSM platform of that name nearby is where people wait: the walk
-  // goes there. "Hauptbahnhof, Eberswalde" (bahn.de) = "Eberswalde, Hauptbahnhof (Bahnhofsbrücke)" (OSM).
+  // goes there. "Hauptbahnhof, Eberswalde" (journey planner) = "Eberswalde, Hauptbahnhof (Bahnhofsbrücke)" (OSM).
   // Returns the stop with point { lat, lon } moved there and stopRef (the platform's ref), or the stop as it is.
-  const STOP_SNAP_MAX = 150;   // m between the point of bahn.de and the OSM platform
+  const STOP_SNAP_MAX = 150;   // m between the point of the journey planner and the OSM platform
   const SIDE_MIN = 5;          // m: two platforms this far apart across the direction of travel are on opposite sides
   function snapStop(st, stop) {
     const d = stop.depart, p = stop.point;
@@ -1313,7 +1313,7 @@ node["railway"~"^(${ENTRANCES}|buffer_stop)$"]${a}->.exits;
     const tram = d.product === 'TRAM';
     const P = projector(st.center.lat, st.center.lon);
     const [px, py] = P.xy(p.lat, p.lon);
-    // Platforms of that name nearby (bus and tram not mixed up), each at its point closest to bahn.de's
+    // Platforms of that name nearby (bus and tram not mixed up), each at its point closest to the journey planner's
     const cands = [];
     for (const pl of Object.values(st.platforms || {})) {
       const t = pl.tags || {};
@@ -1327,7 +1327,7 @@ node["railway"~"^(${ENTRANCES}|buffer_stop)$"]${a}->.exits;
     if (!cands.length) return Object.assign({}, stop, { stopRef: null });
     cands.sort((a, b) => a.d - b.d);
     let pick = cands[0];
-    // The bay bahn.de names ("Bussteig F", "F")
+    // The bay the journey planner names ("Bussteig F", "F")
     const bay = ((d.from && (d.from.rtTrack || d.from.track)) || '').replace(/^(bussteig|steig|pos\.?|position)\s*/i, '').trim().toUpperCase();
     const byBay = bay && cands.find(c => [c.pl.tags.local_ref, c.pl.tags.ref].some(r => r && r.replace(/^(bussteig|steig)\s*/i, '').trim().toUpperCase() === bay));
     if (byBay) pick = byBay;
@@ -1366,7 +1366,7 @@ node["railway"~"^(${ENTRANCES}|buffer_stop)$"]${a}->.exits;
   }
 
   // Enough time to change? Time between arrival and the next departure (real time where known) against the
-  // walk: from recommend() when it found a walk, else the walks of bahn.de between the two legs, plus a
+  // walk: from recommend() when it found a walk, else the walks of the journey planner between the two legs, plus a
   // minute to get off. level: 'ok', 'tight' (less than TIGHT_MINUTES to spare), 'risk' (walk longer than
   // the time left) or 'cancelled' (one of the two trains). null without a following departure or times.
   const WALK_SPEED = 75;     // m per minute (4.5 km/h; stairs are already longer in the walk graph)
@@ -1533,14 +1533,14 @@ out geom;`;
 
   // ---------- Places of the journey search ----------
 
-  // Any point as origin or destination of bahn.de: a location id with coordinates only (kind 'point',
-  // or 'here' for the own location, which is located again before every search)
+  // Any point as origin or destination of the journey search: 'lat,lon' as id (kind 'point', or 'here' for
+  // the own location, which is located again before every search)
   function pointPlace(lat, lon, name, kind) {
-    return { id: `A=16@X=${Math.round(lon * 1e6)}@Y=${Math.round(lat * 1e6)}@`, name, kind: kind || 'point', lat, lon };
+    return { id: `${lat.toFixed(6)},${lon.toFixed(6)}`, name, kind: kind || 'point', lat, lon };
   }
   // Same place? As the user sees it: the own location is always the same place (wherever it was), everything
   // else by kind and name – points on the map are named after the closest stop, the newest one replaces an
-  // older one of the same name; the ids of bahn.de carry a data version that changes over time
+  // older one of the same name; ids can change with the data (bahn.de ids carried a data version)
   const placeKey = (p) => !p ? '' : p.kind === 'here' ? 'here' : p.kind + ':' + p.name;
   const tripKey = (t) => placeKey(t.from) + '>' + placeKey(t.to);
 
