@@ -39,7 +39,7 @@
   const ENTRANCES = 'subway_entrance|train_station_entrance'; // railway=* of station entrances (exits)
   const POINT_KEY = 'point';        // target key of a destination chosen on the map
   // Bump DATA_VERSION whenever this file changes the station model, so stations cached in the browser are rebuilt
-  const DATA_VERSION = 21;
+  const DATA_VERSION = 22;
   const SPOT_GAP = 15;              // m: access ways closer than this along the platform form one spot
   const TIE_ABS = 5;                // m: spots within this distance of the best one count as equal
   // Platforms mapped only as a point (a placeholder, U Spichernstraße): a segment of an assumed length
@@ -316,6 +316,7 @@ node["railway"~"^(${ENTRANCES}|buffer_stop)$"]${a}->.exits;
     for (const a of access) {
       let best = null;
       for (const pl of platList) {
+        if (!stopsAt(a, pl)) continue;
         for (const v of a.pts) {
           const d = distToLines(v, pl.lines);
           if (!best || d < best.d) best = { d, pl, v };
@@ -355,6 +356,10 @@ node["railway"~"^(${ENTRANCES}|buffer_stop)$"]${a}->.exits;
   }
   // Two things can be on the same level unless both say otherwise
   const sameLevel = (a, b) => !a || !b || a.some(x => b.includes(x));
+  // A lift lists every level it stops at: one that does not stop at the platform's level only passes by
+  // (Gesundbrunnen: the lift "S+U8" goes from the street to the U8 right beside platform 7/8 on level -1).
+  // Stairs often name only one of their ends, so they are not checked.
+  const stopsAt = (a, pl) => a.kind !== 'elevator' || sameLevel(parseLevels(a.tags.level), parseLevels(pl.tags.level));
 
   // Stairs, escalators and elevators that are not at a platform but joined to it by a short footway
   // (Gesundbrunnen: the stairs from platform 1/2 down to the U8 start at the end of an 11 m corridor).
@@ -621,6 +626,7 @@ node["railway"~"^(${ENTRANCES}|buffer_stop)$"]${a}->.exits;
     for (const a of st.spare || []) {
       let best = null;
       for (const pl of shaped) {
+        if (!stopsAt(a, pl)) continue;
         for (const v of a.pts) {
           const d = distToLines(v, pl.lines);
           if (!best || d < best.d) best = { d, pl, v };
